@@ -115,7 +115,7 @@ const CreatePin: NextPage<Props> = ({ session }) => {
     handleImageUploaded(selectedFile);
   };
 
-  const checkSubmit = (values: FormValues) => {
+  const checkSubmit = (values: FormValues): boolean => {
     if (!sanityImage) {
       toast('未上傳圖片', { type: 'error' });
       setFileUploadMessage({
@@ -132,13 +132,19 @@ const CreatePin: NextPage<Props> = ({ session }) => {
       !values.category
     ) {
       return false;
+    } else {
+      return true;
     }
   };
 
-  const confirmSubmit = async (
+  const onSubmit = async (
     values: FormValues,
     actions: { resetForm: () => void },
   ): Promise<void> => {
+    const isSuccess = checkSubmit(values);
+
+    if (!isSuccess) return;
+
     setSubmitState({
       style: 'bg-gray-300',
       text: '上傳中',
@@ -165,37 +171,28 @@ const CreatePin: NextPage<Props> = ({ session }) => {
       category: values.category,
     };
 
-    await client
-      .create(doc)
-      .then((): void => {
-        toast('上傳成功!', { type: 'success' });
+    try {
+      await client.create(doc);
 
-        setImageFile(null);
-        setImageFile(null);
-        actions.resetForm();
+      toast('上傳成功!', { type: 'success' });
 
-        window.setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      })
-      .catch(() => {
-        toast('上傳失敗', { type: 'error' });
-      });
+      setImageFile(null);
+      setImageFile(null);
+      actions.resetForm();
+
+      window.setTimeout(() => {
+        router.push('/');
+      }, 2000);
+    } catch (err) {
+      console.log(err);
+      toast('上傳失敗', { type: 'error' });
+    }
 
     setSubmitState({
       style: 'bg-red-500',
       text: '儲存',
       state: 'success',
     });
-  };
-
-  const onSubmit = (
-    values: FormValues,
-    actions: { resetForm: () => void },
-  ): void => {
-    const isSuccess = checkSubmit(values);
-    if (!isSuccess) return;
-    confirmSubmit(values, actions);
   };
 
   const formikConfig = {
