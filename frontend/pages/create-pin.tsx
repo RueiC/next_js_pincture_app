@@ -177,7 +177,6 @@ const CreatePin: NextPage<Props> = ({ session }) => {
       toast('上傳成功!', { type: 'success' });
 
       setImageFile(null);
-      setImageFile(null);
       actions.resetForm();
 
       window.setTimeout(() => {

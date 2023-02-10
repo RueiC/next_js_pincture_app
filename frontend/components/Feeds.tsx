@@ -1,5 +1,5 @@
-import { MasonryLayout, NoResult } from "../components";
-import { PinItem } from "../types";
+import { MasonryLayout, NoResult } from '../components';
+import { PinItem } from '../types';
 
 interface Props {
   pins: PinItem[];

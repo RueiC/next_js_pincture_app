@@ -1,9 +1,9 @@
-import ClipLoader from "react-spinners/ClipLoader";
+import ClipLoader from 'react-spinners/ClipLoader';
 
 const Spinner = () => {
   return (
-    <div className="flex items-center justify-center w-screen h-screen z-10">
-      <ClipLoader color="#ff5656" size={100} speedMultiplier={0.8} />
+    <div className='z-10 flex items-center justify-center w-screen h-screen'>
+      <ClipLoader color='#ff5656' size={100} speedMultiplier={0.8} />
     </div>
   );
 };
