@@ -8,24 +8,39 @@ import { useRouter } from 'next/router';
 
 import { urlFor } from '../utils/client';
 import type { PinItem, SessionUser, SubmitState } from '../types';
-import { useSession } from 'next-auth/react';
 import useCheckSaved from '../hooks/useCheckSaved';
-import { useStateContext } from '../store/stateContext';
 
 interface ModalInfo {
   toggle: boolean;
   id: string;
 }
 
-interface Props {
-  pin: PinItem;
-  setIsModalOpen: Dispatch<SetStateAction<ModalInfo>>;
+interface ToggleSaveBtn {
+  pinItem: PinItem;
+  isSaved: boolean;
+  setPinItem: Dispatch<React.SetStateAction<PinItem | null>>;
+  setSubmitState: Dispatch<React.SetStateAction<SubmitState>>;
 }
 
-const Pin = ({ pin, setIsModalOpen }: Props) => {
+interface Props {
+  pin: PinItem;
+  session: SessionUser;
+  setIsModalOpen: Dispatch<SetStateAction<ModalInfo>>;
+  toggleSavedBtn: ({
+    // eslint-disable-next-line no-unused-vars
+    pinItem,
+    // eslint-disable-next-line no-unused-vars
+    isSaved,
+    // eslint-disable-next-line no-unused-vars
+    setPinItem,
+    // eslint-disable-next-line no-unused-vars
+    setSubmitState,
+  }: ToggleSaveBtn) => Promise<void>;
+}
+
+const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
   const router = useRouter();
-  const { savePin, unSavePin } = useStateContext();
-  const { data: session }: { data: SessionUser | null } = useSession();
+
   const [pinItem, setPinItem] = useState<PinItem | null>(pin);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [submitState, setSubmitState] = useState<SubmitState>({
@@ -38,22 +53,6 @@ const Pin = ({ pin, setIsModalOpen }: Props) => {
     session,
     setSubmitState,
   });
-
-  const toggleSavedBtn = async (pinItem: PinItem) => {
-    if (!pinItem || !session) return;
-
-    try {
-      if (isSaved) {
-        const res = await unSavePin(pinItem, session, setSubmitState);
-        setPinItem(res);
-      } else {
-        const res = await savePin(pinItem, session, setSubmitState);
-        setPinItem(res);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   return (
     <>
@@ -97,7 +96,12 @@ const Pin = ({ pin, setIsModalOpen }: Props) => {
                       }
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleSavedBtn(pinItem);
+                        toggleSavedBtn({
+                          pinItem,
+                          isSaved,
+                          setPinItem,
+                          setSubmitState,
+                        });
                       }}
                     >
                       {submitState.text}
