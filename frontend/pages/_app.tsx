@@ -36,6 +36,7 @@ const MyApp = ({ Component, pageProps, router, session }: CustomAppProps) => {
           pauseOnHover
           theme='light'
         />
+
         {router.route !== '/login' ? (
           <>
             <NavBar />

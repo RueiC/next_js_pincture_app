@@ -1,33 +1,19 @@
-import { useState } from 'react';
 import Image from 'next/image';
 import { AiFillDelete } from 'react-icons/ai';
-import { toast } from 'react-toastify';
 
 import { CommentType, SessionUser } from '../types';
-import { client } from '../utils/client';
 
-interface CommentProps extends CommentType {
-  session: SessionUser;
+interface CommentProps {
   pinId: string;
+  comment: CommentType;
+  session: SessionUser;
+  deleteComment: (
+    // eslint-disable-next-line no-unused-vars
+    comment: CommentType,
+  ) => Promise<void>;
 }
 
-const Comment = (props: CommentProps) => {
-  const [comment, setComment] = useState<CommentProps | null>(props);
-
-  const deleteComment = async (key: string) => {
-    if (!key || !comment) return;
-
-    await client
-      .patch(comment.pinId)
-      .unset([`comments[_key == "${key}"]`])
-      .commit()
-      .then(() => {
-        toast('留言刪除成功!', { type: 'success' });
-        setComment(null);
-      })
-      .catch((err) => console.log(err));
-  };
-
+const Comment = ({ pinId, comment, session, setDeletedItem }: CommentProps) => {
   return (
     <>
       {comment ? (
@@ -50,11 +36,12 @@ const Comment = (props: CommentProps) => {
               <p className='text-[1rem] text-text-2'>{comment.comment}</p>
             </div>
           </div>
-
-          {comment.session.id === comment.postedBy._id ? (
+          {session.id === comment.postedBy._id ? (
             <div
               className='flex items-center justify-center bg-red-500 p-[0.5rem] opacity-80 rounded-full hover:scale-105 hover:opacity-100 duration-200 ease-linear cursor-pointer'
-              onClick={() => deleteComment(comment._key)}
+              onClick={() =>
+                setDeletedItem({ type: 'comment', id: pinId, comment })
+              }
             >
               <AiFillDelete className='text-white' />
             </div>

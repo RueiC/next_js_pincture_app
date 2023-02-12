@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -20,7 +20,7 @@ import { feedQuery } from '../../utils/queries';
 import MasonryLayout from '../../components/MasonryLayout';
 import { client } from '../../utils/client';
 import { pinDetailQuery } from '../../utils/queries';
-import { CommentField, ConfirmModal, NoResult } from '../../components';
+import { CommentField, ConfirmModal, NoResult, Pin } from '../../components';
 import useCheckSaved from '../../hooks/useCheckSaved';
 import { useStateContext } from '../../store/stateContext';
 
@@ -81,133 +81,33 @@ const PinDetailPage: NextPage<Props> = ({
   pinDetail,
   pins,
 }) => {
-  const router = useRouter();
-  const { savePin, unSavePin } = useStateContext();
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [pin, setPin] = useState<PinItem>();
   const [newPinDetail, setNewPinDetail] = useState<PinDetail | null>(pinDetail);
-  const [submitState, setSubmitState] = useState<SubmitState>({
-    style: 'bg-red-500',
-    text: '儲存',
-    state: 'unSaved',
-  });
-  const [isModalOpen, setIsModalOpen] = useState<ModalInfo>({
-    toggle: false,
-    id: '',
-  });
-  const isSaved = useCheckSaved({
-    pinDetail: newPinDetail,
-    session,
-    setSubmitState,
-  });
+  const { toggleDeleteWindow } = useStateContext();
 
-  const toggleSavedBtn = async (newPinDetail: PinDetail) => {
-    if (!newPinDetail || !session) return;
+  useEffect(() => {
+    if (!newPinDetail) return;
 
-    try {
-      if (isSaved) {
-        const res = await unSavePin(newPinDetail, session, setSubmitState);
-        setNewPinDetail(res);
-      } else {
-        const res = await savePin(newPinDetail, session, setSubmitState);
-        setNewPinDetail(res);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    const newPin = {
+      _id: newPinDetail._id,
+      destination: newPinDetail.destination,
+      image: newPinDetail.image.asset.url,
+      postedBy: newPinDetail.postedBy,
+      save: newPinDetail.save,
+      userId: newPinDetail.userId,
+    };
 
-  const deletePin = async (): Promise<void> => {
-    try {
-      await client.delete(pinId).then(() => {
-        setIsModalOpen({ toggle: false, id: '' });
-        toast('刪除成功', { type: 'success' });
-
-        window.setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    setPin(newPin);
+  }, [newPinDetail]);
 
   return (
     <>
-      {isModalOpen.toggle ? (
-        <ConfirmModal deletePin={deletePin} setIsModalOpen={setIsModalOpen} />
-      ) : null}
+      {toggleDeleteWindow ? <ConfirmModal /> : null}
 
       {newPinDetail ? (
         <main className='flex flex-col gap-[5rem]'>
           <div className='flex flex-col md:flex-row items-center md:items-start justify-center w-full h-full px-[3rem] md:px-[6rem] xl:px-[10rem] mt-[3rem] gap-[3rem]'>
-            <div
-              className='relative w-full md:w-[70%] rounded-[1rem] object-contain'
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <Image
-                className='!relative !w-full rounded-[1rem] block'
-                src={newPinDetail?.image?.asset?.url}
-                blurDataURL={newPinDetail?.image?.asset?.url}
-                alt='picture'
-                placeholder='blur'
-                fill
-                sizes='100'
-              />
-
-              {isHovered ? (
-                <div className='absolute flex flex-col justify-between top-0 w-full h-full p-[1rem] transition-all opacity-0 hover:opacity-100 cursor-pointer'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex items-center justify-center bg-white h-[2.5rem] w-[2.5rem] rounded-full text-black text-[1.2rem] opacity-70 hover:opacity-80 transition-all duration-200 ease-linear'>
-                      <Link
-                        href={`${newPinDetail.image.asset.url}?dl=`}
-                        legacyBehavior
-                      >
-                        <a download onClick={(e) => e.stopPropagation()}>
-                          <IoMdCloudDownload />
-                        </a>
-                      </Link>
-                    </div>
-                    {session.id !== newPinDetail.userId && (
-                      <button
-                        className={`${submitState.style} flex items-center justify-center opacity-80 hover:opacity-100 transition-all duration-200 ease-linear rounded-full text-white py-[0.5rem] px-[1rem] font-bold`}
-                        disabled={
-                          submitState.state === 'uploading' ? true : false
-                        }
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSavedBtn(newPinDetail);
-                        }}
-                      >
-                        {submitState.text}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className='flex justify-between w-full'>
-                    <Link
-                      href={`/pin-detail/${newPinDetail._id}`}
-                      className='flex items-center justify-start bg-white opacity-70 hover:opacity-80 transition-all duration-200 ease-linear rounded-full text-black py-[0.5rem] px-[1rem]'
-                    >
-                      <BsFillArrowUpRightCircleFill className='mr-[0.5rem]' />
-                      {newPinDetail.destination.slice(8, 25)}...
-                    </Link>
-
-                    {session.id === newPinDetail.userId && (
-                      <div
-                        className='flex items-center justify-center text-[1.2rem] bg-white opacity-70 hover:opacity-80 rounded-full text-black h-[2.5rem] w-[2.5rem]'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsModalOpen({ toggle: true, id: '' });
-                        }}
-                      >
-                        <RiDeleteBin6Fill />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            {pin ? <Pin pin={pin} session={session} /> : null}
 
             <div className='flex flex-col gap-[1.5rem] w-full h-full'>
               <div>

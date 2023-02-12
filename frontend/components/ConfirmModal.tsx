@@ -1,17 +1,85 @@
-import { Dispatch, SetStateAction } from 'react';
 import { GoAlert } from 'react-icons/go';
+import { useStateContext } from '../store/stateContext';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
+import { CommentType } from '../types';
+import { client } from '../utils/client';
+import { stateMsgTemplate } from '../utils/data';
 
-interface ModalInfo {
-  toggle: boolean;
-  id: string;
-}
+const ConfirmModal = () => {
+  const router = useRouter();
+  const { deletedItem, fetchComments, setDeletedItem, setToggleDeleteWindow } =
+    useStateContext();
+  const [submitState, setSubmitState] = useState({
+    style: 'bg-red-500',
+    text: '確定',
+    state: 'default',
+  });
 
-interface Props {
-  deletePin: () => Promise<void>;
-  setIsModalOpen: Dispatch<SetStateAction<ModalInfo>>;
-}
+  const deletePin = async (id: string): Promise<void> => {
+    try {
+      await client.delete(id).then(() => {
+        toast('刪除成功', { type: 'success' });
 
-const ConfirmModal = ({ deletePin, setIsModalOpen }: Props) => {
+        window.setTimeout(() => {
+          router.push('/');
+        }, 2000);
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const deleteComment = async (
+    id: string,
+    comment: CommentType,
+  ): Promise<void> => {
+    if (!comment._key || !comment) return;
+
+    await client
+      .patch(id)
+      .unset([`comments[_key == "${comment._key}"]`])
+      .commit()
+      .then(() => {
+        fetchComments(id);
+        toast('留言刪除成功!', { type: 'success' });
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const handleDelete = async (): Promise<void> => {
+    if (!deletedItem) return;
+
+    setSubmitState({
+      style: stateMsgTemplate.style.gray,
+      text: stateMsgTemplate.text.handling,
+      state: stateMsgTemplate.state.handling,
+    });
+
+    if (deletedItem.type === 'pin') {
+      const { id } = deletedItem;
+      await deletePin(id);
+    }
+
+    if (deletedItem.type === 'comment') {
+      const { id, comment } = deletedItem;
+      await deleteComment(id, comment);
+    }
+
+    closeDeleteConfirmWindow();
+    setSubmitState({
+      style: stateMsgTemplate.style.red,
+      text: stateMsgTemplate.text.default,
+      state: stateMsgTemplate.state.default,
+    });
+  };
+
+  const closeDeleteConfirmWindow = () => {
+    setDeletedItem(null);
+    setToggleDeleteWindow(false);
+  };
+
   return (
     <>
       <div className='fixed top-0 left-0 bg-black/50 w-full h-[100vh] z-40' />
@@ -32,19 +100,15 @@ const ConfirmModal = ({ deletePin, setIsModalOpen }: Props) => {
 
             <div className='absolute bottom-0 w-full flex items-center justify-between text-[1rem]'>
               <button
-                className='bg-red-500 py-[0.8rem] w-full text-white opacity-100 hover:opacity-80 transition-all duration-200 ease-linear'
-                onClick={deletePin}
+                className={`${submitState.style} py-[0.8rem] w-full text-white opacity-100 hover:opacity-80 transition-all duration-200 ease-linear`}
+                onClick={() => handleDelete(deletedItem)}
+                disabled={submitState.state === 'handling' ? true : false}
               >
-                刪除
+                {submitState.text}
               </button>
               <button
                 className='bg-gray-400 py-[0.8rem] w-full text-white opacity-100 hover:opacity-80 transition-all duration-200 ease-linear'
-                onClick={() =>
-                  setIsModalOpen({
-                    toggle: false,
-                    id: '',
-                  })
-                }
+                onClick={() => setDeletedItem(null)}
               >
                 取消
               </button>

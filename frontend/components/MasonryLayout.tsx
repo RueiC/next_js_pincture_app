@@ -28,19 +28,10 @@ const breakpointColumnsObj = {
   600: 1,
 };
 
-interface ModalInfo {
-  toggle: boolean;
-  id: string;
-}
-
 const MasonryLayout = ({ pins }: Props) => {
-  const { savePin, unSavePin } = useStateContext();
+  const { toggleDeleteWindow } = useStateContext();
   const { data: session }: { data: SessionUser | null } = useSession();
   const [newPins, setNewPins] = useState<PinItem[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState<ModalInfo>({
-    toggle: false,
-    id: '',
-  });
 
   useEffect(() => {
     if (!pins) return;
@@ -48,48 +39,9 @@ const MasonryLayout = ({ pins }: Props) => {
     setNewPins(pins);
   }, [pins]);
 
-  const deletePin = async (): Promise<void> => {
-    if (isModalOpen.id === '') return;
-
-    await client.delete(isModalOpen.id).then(() => {
-      const pins = newPins.filter((pin) => {
-        return pin._id !== isModalOpen.id;
-      });
-
-      setIsModalOpen({ toggle: false, id: '' });
-
-      setNewPins(pins);
-
-      toast('刪除成功', { type: 'success' });
-    });
-  };
-
-  const toggleSavedBtn = async ({
-    pinItem,
-    isSaved,
-    setPinItem,
-    setSubmitState,
-  }: ToggleSaveBtn): Promise<void> => {
-    if (!pinItem || !session) return;
-
-    try {
-      if (isSaved) {
-        const res = await unSavePin(pinItem, session, setSubmitState);
-        setPinItem(res);
-      } else {
-        const res = await savePin(pinItem, session, setSubmitState);
-        setPinItem(res);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   return (
     <>
-      {isModalOpen.toggle ? (
-        <ConfirmModal deletePin={deletePin} setIsModalOpen={setIsModalOpen} />
-      ) : null}
+      {toggleDeleteWindow ? <ConfirmModal /> : null}
 
       <div className='px-[3rem] md:px-[6rem] xl:px-[10rem] pt-[2rem]'>
         {newPins?.length > 0 && session ? (
@@ -98,13 +50,7 @@ const MasonryLayout = ({ pins }: Props) => {
             breakpointCols={breakpointColumnsObj}
           >
             {newPins.map((pin) => (
-              <Pin
-                pin={pin}
-                key={pin._id}
-                setIsModalOpen={setIsModalOpen}
-                toggleSavedBtn={toggleSavedBtn}
-                session={session}
-              />
+              <Pin pin={pin} key={pin._id} session={session} />
             ))}
           </Masonry>
         ) : null}

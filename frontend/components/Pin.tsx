@@ -7,46 +7,30 @@ import { IoMdCloudDownload } from 'react-icons/io';
 import { useRouter } from 'next/router';
 
 import { urlFor } from '../utils/client';
-import type { PinItem, SessionUser, SubmitState } from '../types';
+import type { PinItem, SessionUser } from '../types';
 import useCheckSaved from '../hooks/useCheckSaved';
+import { useStateContext } from '../store/stateContext';
 
 interface ModalInfo {
   toggle: boolean;
   id: string;
 }
 
-interface ToggleSaveBtn {
-  pinItem: PinItem;
-  isSaved: boolean;
-  setPinItem: Dispatch<React.SetStateAction<PinItem | null>>;
-  setSubmitState: Dispatch<React.SetStateAction<SubmitState>>;
-}
-
 interface Props {
   pin: PinItem;
   session: SessionUser;
   setIsModalOpen: Dispatch<SetStateAction<ModalInfo>>;
-  toggleSavedBtn: ({
-    // eslint-disable-next-line no-unused-vars
-    pinItem,
-    // eslint-disable-next-line no-unused-vars
-    isSaved,
-    // eslint-disable-next-line no-unused-vars
-    setPinItem,
-    // eslint-disable-next-line no-unused-vars
-    setSubmitState,
-  }: ToggleSaveBtn) => Promise<void>;
 }
 
-const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
+const Pin = ({ pin, session }: Props) => {
   const router = useRouter();
-
+  const { toggleSavedBtn, setDeletedItem } = useStateContext();
   const [pinItem, setPinItem] = useState<PinItem | null>(pin);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [submitState, setSubmitState] = useState<SubmitState>({
+  const [submitState, setSubmitState] = useState({
     style: 'bg-red-500',
     text: '儲存',
-    state: 'unSaved',
+    state: 'default',
   });
   const isSaved = useCheckSaved({
     pinDetail: pinItem,
@@ -91,14 +75,13 @@ const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
                   {session.id !== pinItem.userId ? (
                     <button
                       className={`${submitState.style} flex items-center justify-center opacity-80 hover:opacity-100 rounded-full text-white py-[0.5rem] px-[1rem] font-bold`}
-                      disabled={
-                        submitState.state === 'uploading' ? true : false
-                      }
+                      disabled={submitState.state === 'handling' ? true : false}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSavedBtn({
                           pinItem,
                           isSaved,
+                          session,
                           setPinItem,
                           setSubmitState,
                         });
@@ -111,7 +94,7 @@ const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
 
                 <div className='flex justify-between w-full'>
                   <Link
-                    href={`/pin-detail/${pinItem._id}`}
+                    href={pinItem.destination}
                     className='flex items-center justify-start bg-white opacity-70 hover:opacity-80 rounded-full text-black py-[0.5rem] px-[1rem]'
                   >
                     <BsFillArrowUpRightCircleFill className='mr-[0.5rem]' />
@@ -123,7 +106,7 @@ const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
                       className='flex items-center justify-center text-[1.2rem] bg-white opacity-70 hover:opacity-80 rounded-full text-black h-[2.5rem] w-[2.5rem]'
                       onClick={(e) => {
                         e.stopPropagation();
-                        setIsModalOpen({ toggle: true, id: pin._id });
+                        setDeletedItem({ type: 'pin', id: pin._id });
                       }}
                     >
                       <RiDeleteBin6Fill />
@@ -134,21 +117,23 @@ const Pin = ({ pin, session, setIsModalOpen, toggleSavedBtn }: Props) => {
             )}
           </div>
 
-          <Link href={`/user-profile/${pinItem?.postedBy?._id}`}>
-            <div className='flex items-center justify-start gap-[1rem] mt-[0.8rem] h-full w-full cursor-pointer'>
-              <Image
-                className='rounded-full'
-                src={pinItem?.postedBy?.image}
-                alt='user image'
-                width={35}
-                height={35}
-              />
+          {router.pathname.startsWith('pin-detail') ? (
+            <Link href={`/user-profile/${pinItem?.postedBy?._id}`}>
+              <div className='flex items-center justify-start gap-[1rem] mt-[0.8rem] h-full w-full cursor-pointer'>
+                <Image
+                  className='rounded-full'
+                  src={pinItem?.postedBy?.image}
+                  alt='user image'
+                  width={35}
+                  height={35}
+                />
 
-              <p className='font-semibold sm:text-[0.8rem]'>
-                {pinItem?.postedBy?.userName}
-              </p>
-            </div>
-          </Link>
+                <p className='font-semibold sm:text-[0.8rem]'>
+                  {pinItem?.postedBy?.userName}
+                </p>
+              </div>
+            </Link>
+          ) : null}
         </div>
       ) : null}
     </>

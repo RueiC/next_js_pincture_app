@@ -4,9 +4,9 @@ import { toast } from 'react-toastify';
 
 import Images from '../assets/index';
 import { Comment } from './index';
-import { SessionUser, CommentType, SubmitState } from '../types';
-import { client } from '../utils/client';
-import { pinComments } from '../utils/queries';
+import { SessionUser } from '../types';
+import { useStateContext } from '../store/stateContext';
+import { stateMsgTemplate } from '../utils/data';
 
 interface Props {
   session: SessionUser;
@@ -14,54 +14,37 @@ interface Props {
 }
 
 const CommentField = ({ session, pinId }: Props) => {
+  const { comments, addComment, setDeletedItem, fetchComments } =
+    useStateContext();
   const [commentInput, setCommentInput] = useState<string>('');
-  const [comments, setComments] = useState<CommentType[]>();
-  const [submitState, setSubmitState] = useState<SubmitState>({
+  const [submitState, setSubmitState] = useState({
     style: 'bg-red-500',
-    text: '完成',
-    state: 'none',
+    text: '確定',
+    state: 'default',
   });
 
   useEffect(() => {
     if (!pinId) return;
 
-    fetchComments();
+    fetchComments(pinId);
   }, []);
 
-  const fetchComments = async (): Promise<void> => {
-    const query: string = pinComments(pinId);
-
-    try {
-      const res = await client.fetch(query);
-      if (!res.length && !res[0]?.comments.length) setComments(res[0].comments);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const checkComment = (comment: string): boolean => {
+  const checkComment = async (commentInput: string): Promise<void> => {
     if (!session) {
       toast('請先登入後再繼續', { type: 'error' });
-      return false;
-    } else if (comment === '') {
+      return;
+    } else if (commentInput === '') {
       toast('請輸入內容', { type: 'error' });
-      return false;
-    } else {
-      return true;
+      return;
     }
-  };
-
-  const confirmAddComment = async (comment: string): Promise<void> => {
     setSubmitState({
-      style: 'bg-gray-300',
-      text: '處理中',
-      state: 'uploading',
+      style: stateMsgTemplate.style.gray,
+      text: stateMsgTemplate.text.handling,
+      state: stateMsgTemplate.state.handling,
     });
 
-    setCommentInput('');
-
     const commentData = {
-      comment,
+      comment: commentInput,
       createdAt: new Date().toISOString(),
       postedBy: {
         _type: 'postedBy',
@@ -69,31 +52,15 @@ const CommentField = ({ session, pinId }: Props) => {
       },
     };
 
-    try {
-      await client
-        .patch(pinId)
-        .setIfMissing({ comments: [] })
-        .append('comments', [commentData])
-        .commit({ autoGenerateArrayKeys: true })
-        .then(() => {
-          setSubmitState({
-            style: 'bg-red-500',
-            text: '完成',
-            state: 'none',
-          });
-          fetchComments();
-          toast('已新增留言', { type: 'success' });
-        });
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    setCommentInput('');
 
-  const addComment = (comment: string): void => {
-    const isSuccess = checkComment(comment);
-    if (!isSuccess) return;
+    await addComment(pinId, commentData);
 
-    confirmAddComment(comment);
+    setSubmitState({
+      style: stateMsgTemplate.style.red,
+      text: stateMsgTemplate.text.default,
+      state: stateMsgTemplate.state.default,
+    });
   };
 
   return (
@@ -102,16 +69,14 @@ const CommentField = ({ session, pinId }: Props) => {
         留言
       </p>
 
-      {comments
+      {comments?.length > 0
         ? comments.map((comment) => (
             <Comment
               key={comment._key}
-              _key={comment._key}
-              comment={comment.comment}
-              postedBy={comment.postedBy}
-              createdAt={comment.createdAt}
-              session={session}
               pinId={pinId}
+              comment={comment}
+              session={session}
+              setDeletedItem={setDeletedItem}
             />
           ))
         : null}
@@ -120,7 +85,7 @@ const CommentField = ({ session, pinId }: Props) => {
         className='flex items-center gap-[1rem] w-full'
         onSubmit={(e) => {
           e.preventDefault();
-          addComment(commentInput);
+          checkComment(commentInput);
         }}
       >
         <Image
@@ -141,7 +106,7 @@ const CommentField = ({ session, pinId }: Props) => {
         <button
           className={`${submitState.style} text-white rounded-full px-[1.5rem] py-[0.5rem] font-semibold text-base outline-none hover:scale-105 transition-all duration-300 ease-in-out text-[1rem]`}
           type='submit'
-          disabled={submitState.state === 'uploading' ? true : false}
+          disabled={submitState.state === 'handling' ? true : false}
         >
           {submitState.text}
         </button>
