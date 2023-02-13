@@ -65,29 +65,28 @@ const CreatePin: NextPage<Props> = ({ session }) => {
   });
   const imagePreview = useObjectURL({ sanityImage, imageFile });
 
-  const handleUploadingMsg = (state: string, payload: string) => {
-    switch (state) {
-      case 'uploading':
-        return setFileUploadMessage((prevVal) => {
-          return {
-            style: prevVal.style,
-            message: payload,
-          };
-        });
-
-      case 'success':
-        return setFileUploadMessage({
-          style: 'text-green-500 text-medium',
+  const handleUploadingMsg = (state: string, payload: string): void => {
+    if (state === 'uploading') {
+      setFileUploadMessage((prevVal) => {
+        return {
+          style: prevVal.style,
           message: payload,
-        });
+        };
+      });
+    }
 
-      default:
-        return '';
+    if (state === 'success') {
+      setFileUploadMessage({
+        style: 'text-green-500 text-medium',
+        message: payload,
+      });
     }
   };
 
   const handleImageUploaded = async (file: File): Promise<void> => {
-    setImageFile(file);
+    const uploadedFile = file;
+
+    setImageFile(uploadedFile);
     // uploading asset to sanity
     if (
       file.type === 'image/png' ||
@@ -96,9 +95,9 @@ const CreatePin: NextPage<Props> = ({ session }) => {
       file.type === 'image/gif' ||
       file.type === 'image/tiff'
     ) {
-      const document = await client.assets.upload('image', file, {
-        contentType: file.type,
-        filename: file.name,
+      const document = await client.assets.upload('image', uploadedFile, {
+        contentType: uploadedFile.type,
+        filename: uploadedFile.name,
       });
 
       handleUploadingMsg('success', document.originalFilename as string);
