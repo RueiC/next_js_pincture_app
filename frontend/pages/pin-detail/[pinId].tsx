@@ -1,33 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 import { getSession } from 'next-auth/react';
-import { toast } from 'react-toastify';
 import { GetServerSideProps, NextPage } from 'next';
-import { RiDeleteBin6Fill } from 'react-icons/ri';
-import { BsFillArrowUpRightCircleFill } from 'react-icons/bs';
-import { IoMdCloudDownload } from 'react-icons/io';
+
 import type {
   PageId,
   PinItem,
   Redirect,
   PinDetail,
   SessionUser,
-  SubmitState,
 } from '../../types';
 import { feedQuery } from '../../utils/queries';
 import MasonryLayout from '../../components/MasonryLayout';
 import { client } from '../../utils/client';
 import { pinDetailQuery } from '../../utils/queries';
 import { CommentField, ConfirmModal, NoResult, Pin } from '../../components';
-import useCheckSaved from '../../hooks/useCheckSaved';
 import { useStateContext } from '../../store/stateContext';
-
-interface ModalInfo {
-  toggle: boolean;
-  id: string;
-}
 
 interface ServerSideProps {
   props: {
@@ -81,55 +70,38 @@ const PinDetailPage: NextPage<Props> = ({
   pinDetail,
   pins,
 }) => {
-  const [pin, setPin] = useState<PinItem>();
-  const [newPinDetail, setNewPinDetail] = useState<PinDetail | null>(pinDetail);
   const { toggleDeleteWindow } = useStateContext();
-
-  useEffect(() => {
-    if (!newPinDetail) return;
-
-    const newPin = {
-      _id: newPinDetail._id,
-      destination: newPinDetail.destination,
-      image: newPinDetail.image.asset.url,
-      postedBy: newPinDetail.postedBy,
-      save: newPinDetail.save,
-      userId: newPinDetail.userId,
-    };
-
-    setPin(newPin);
-  }, [newPinDetail]);
 
   return (
     <>
       {toggleDeleteWindow ? <ConfirmModal /> : null}
 
-      {newPinDetail ? (
+      {pinDetail ? (
         <main className='flex flex-col gap-[5rem]'>
           <div className='flex flex-col md:flex-row items-center md:items-start justify-center w-full h-full px-[3rem] md:px-[6rem] xl:px-[10rem] mt-[3rem] gap-[3rem]'>
-            {pin ? <Pin pin={pin} session={session} /> : null}
+            {pinDetail ? <Pin pin={pinDetail} session={session} /> : null}
 
             <div className='flex flex-col gap-[1.5rem] w-full h-full'>
               <div>
                 <h1 className='text-[1.7rem] font-bold break-words text-text-1'>
-                  {newPinDetail?.title}
+                  {pinDetail?.title}
                 </h1>
                 <p className='mt-[0.6rem] text-[1.2rem] text-text-2 font-normal opacity-90'>
-                  {newPinDetail?.about}
+                  {pinDetail?.about}
                 </p>
               </div>
 
-              <Link href={`/user-profile/${newPinDetail?.postedBy._id}`}>
+              <Link href={`/user-profile/${pinDetail?.postedBy._id}`}>
                 <div className='flex items-center gap-[1rem]'>
                   <Image
                     className='rounded-full cursor-pointer'
-                    src={newPinDetail?.postedBy?.image}
+                    src={pinDetail?.postedBy?.image}
                     alt='user image'
                     width={40}
                     height={40}
                   />
                   <p className='cursor-pointer font-medium text-[1rem] text-text-2'>
-                    {newPinDetail?.postedBy?.userName}
+                    {pinDetail?.postedBy?.userName}
                   </p>
                 </div>
               </Link>

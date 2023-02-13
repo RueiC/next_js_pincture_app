@@ -1,16 +1,14 @@
+import { Dispatch, SetStateAction } from 'react';
 import Image from 'next/image';
 import { AiFillDelete } from 'react-icons/ai';
 
-import { CommentType, SessionUser } from '../types';
+import { CommentType, DeletedItem, SessionUser } from '../types';
 
 interface CommentProps {
   pinId: string;
   comment: CommentType;
   session: SessionUser;
-  deleteComment: (
-    // eslint-disable-next-line no-unused-vars
-    comment: CommentType,
-  ) => Promise<void>;
+  setDeletedItem: Dispatch<SetStateAction<DeletedItem | null>>;
 }
 
 const Comment = ({ pinId, comment, session, setDeletedItem }: CommentProps) => {

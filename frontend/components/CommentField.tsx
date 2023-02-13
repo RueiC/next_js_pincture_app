@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import Images from '../assets/index';
 import { Comment } from './index';
-import { SessionUser } from '../types';
+import { SessionUser, SubmitedComment } from '../types';
 import { useStateContext } from '../store/stateContext';
 import { stateMsgTemplate } from '../utils/data';
 
@@ -43,7 +43,7 @@ const CommentField = ({ session, pinId }: Props) => {
       state: stateMsgTemplate.state.handling,
     });
 
-    const commentData = {
+    const commentData: SubmitedComment = {
       comment: commentInput,
       createdAt: new Date().toISOString(),
       postedBy: {

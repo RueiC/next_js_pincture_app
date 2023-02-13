@@ -1,31 +1,47 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { PinItem, SessionUser, SubmitState, PinDetail } from '../types';
+/* eslint-disable no-unused-vars */
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  SetStateAction,
+  Dispatch,
+} from 'react';
 import usePinsData from '../hooks/usePinsData';
+import type {
+  PinItem,
+  CommentType,
+  DeletedItem,
+  SessionUser,
+  SubmitState,
+  SubmitedComment,
+} from '../types';
 
-interface defaultValue {
+interface pinsDataHook {
+  comments: CommentType[];
   isLoading: boolean;
   toggleDeleteWindow: boolean;
-  setToggleDeleteWindow: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  savePin: (
-    // eslint-disable-next-line no-unused-vars
-    pinItem: PinItem | PinDetail,
-    // eslint-disable-next-line no-unused-vars
-    session: SessionUser,
-    // eslint-disable-next-line no-unused-vars
-    setSubmitState: React.Dispatch<React.SetStateAction<SubmitState>>,
-  ) => Promise<any | null>;
+  deletedItem: DeletedItem | null;
+  savePin: (pinItem: PinItem, session: SessionUser) => Promise<PinItem | null>;
   unSavePin: (
-    // eslint-disable-next-line no-unused-vars
     pinItem: PinItem,
-    // eslint-disable-next-line no-unused-vars
     session: SessionUser,
-    // eslint-disable-next-line no-unused-vars
-    setSubmitState: React.Dispatch<React.SetStateAction<SubmitState>>,
-  ) => Promise<any | null>;
+  ) => Promise<PinItem | null>;
+  toggleSavedBtn: (
+    pinItem: PinItem,
+    isSaved: boolean,
+    session: SessionUser,
+    setPinItem: Dispatch<React.SetStateAction<PinItem | null>>,
+    setSubmitState: Dispatch<React.SetStateAction<SubmitState>>,
+  ) => Promise<void>;
+  fetchComments: (pinId: string) => Promise<void>;
+  addComment: (pinId: string, commentData: SubmitedComment) => Promise<void>;
+  setDeletedItem: Dispatch<SetStateAction<DeletedItem | null>>;
+  setToggleDeleteWindow: Dispatch<SetStateAction<boolean>>;
+  setIsLoading: Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Context = createContext({} as defaultValue);
+const Context = createContext({} as pinsDataHook);
 
 export const StateProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,11 +59,6 @@ export const StateProvider = ({ children }: { children: ReactNode }) => {
     setToggleDeleteWindow,
   } = usePinsData();
 
-  // 狀態 (pin, input, modal) v
-  // set pin v
-  // set comment v
-  // type
-
   return (
     <Context.Provider
       value={{
@@ -57,12 +68,12 @@ export const StateProvider = ({ children }: { children: ReactNode }) => {
         deletedItem,
         savePin,
         unSavePin,
-        setIsLoading,
-        setDeletedItem,
+        toggleSavedBtn,
         fetchComments,
         addComment,
-        toggleSavedBtn,
+        setDeletedItem,
         setToggleDeleteWindow,
+        setIsLoading,
       }}
     >
       {children}

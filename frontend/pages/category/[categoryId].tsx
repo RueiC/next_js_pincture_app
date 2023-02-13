@@ -3,8 +3,11 @@ import { getSession } from 'next-auth/react';
 import { Session } from 'next-auth';
 import { Feeds, NoResult, Spinner } from '../../components';
 
-import { PageId, Redirect } from '../../types';
-import useCategoriesFilter from '../../hooks/useCategoriesFilter';
+import { PageId, PinItem, Redirect } from '../../types';
+import { useState, useEffect } from 'react';
+import { useStateContext } from '../../store/stateContext';
+import { client } from '../../utils/client';
+import { categoryQuery } from '../../utils/queries';
 
 interface ServerSideProps {
   props: {
@@ -39,7 +42,27 @@ export const getServerSideProps: GetServerSideProps = async (
 };
 
 const Category: NextPage<Props> = ({ session, categoryId }) => {
-  const { pins, isLoading } = useCategoriesFilter({ categoryId, session });
+  const [pins, setPins] = useState<PinItem[] | null>(null);
+  const { isLoading, setIsLoading } = useStateContext();
+
+  const getPins = async (): Promise<void> => {
+    const query: string = categoryQuery(categoryId);
+
+    try {
+      const res = await client.fetch(query);
+      if (res?.length > 0) setPins(res);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!categoryId || !session) return;
+    setIsLoading(true);
+
+    getPins();
+    setIsLoading(false);
+  }, [categoryId, session]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RiDeleteBin6Fill } from 'react-icons/ri';
@@ -11,15 +11,9 @@ import type { PinItem, SessionUser } from '../types';
 import useCheckSaved from '../hooks/useCheckSaved';
 import { useStateContext } from '../store/stateContext';
 
-interface ModalInfo {
-  toggle: boolean;
-  id: string;
-}
-
 interface Props {
   pin: PinItem;
   session: SessionUser;
-  setIsModalOpen: Dispatch<SetStateAction<ModalInfo>>;
 }
 
 const Pin = ({ pin, session }: Props) => {
@@ -32,8 +26,9 @@ const Pin = ({ pin, session }: Props) => {
     text: '儲存',
     state: 'default',
   });
+
   const isSaved = useCheckSaved({
-    pinDetail: pinItem,
+    pinItem: pinItem,
     session,
     setSubmitState,
   });
@@ -78,13 +73,13 @@ const Pin = ({ pin, session }: Props) => {
                       disabled={submitState.state === 'handling' ? true : false}
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleSavedBtn({
+                        toggleSavedBtn(
                           pinItem,
                           isSaved,
                           session,
                           setPinItem,
                           setSubmitState,
-                        });
+                        );
                       }}
                     >
                       {submitState.text}
@@ -106,7 +101,11 @@ const Pin = ({ pin, session }: Props) => {
                       className='flex items-center justify-center text-[1.2rem] bg-white opacity-70 hover:opacity-80 rounded-full text-black h-[2.5rem] w-[2.5rem]'
                       onClick={(e) => {
                         e.stopPropagation();
-                        setDeletedItem({ type: 'pin', id: pin._id });
+                        setDeletedItem({
+                          type: 'pin',
+                          id: pin._id,
+                          comment: null,
+                        });
                       }}
                     >
                       <RiDeleteBin6Fill />

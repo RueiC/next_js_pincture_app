@@ -1,29 +1,23 @@
 import { useEffect, useState } from 'react';
-import type {
-  PinDetail,
-  PinItem,
-  Save,
-  SessionUser,
-  SubmitState,
-} from '../types';
+import type { PinItem, Save, SessionUser, SubmitState } from '../types';
 
 interface Props {
   session: SessionUser | null;
-  pinDetail: PinDetail | PinItem | null;
+  pinItem: PinItem | null;
   setSubmitState: React.Dispatch<React.SetStateAction<SubmitState>>;
 }
 
 const useCheckSaved = ({
-  pinDetail,
+  pinItem,
   session,
   setSubmitState,
 }: Props): boolean => {
   const [isSaved, setIsSaved] = useState<boolean>(false);
 
   useEffect(() => {
-    if (pinDetail === null || pinDetail?.save === null || !session) return;
+    if (pinItem === null || pinItem?.save === null || !session) return;
 
-    const alreadySaved: boolean = pinDetail.save.some(
+    const alreadySaved: boolean = pinItem.save.some(
       (item: Save): boolean => item.userId === session.id,
     );
 
@@ -42,7 +36,7 @@ const useCheckSaved = ({
         state: 'unSaved',
       });
     }
-  }, [pinDetail, session]);
+  }, [pinItem, session]);
 
   return isSaved;
 };

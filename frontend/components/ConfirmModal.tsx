@@ -64,6 +64,7 @@ const ConfirmModal = () => {
 
     if (deletedItem.type === 'comment') {
       const { id, comment } = deletedItem;
+      if (!comment) return;
       await deleteComment(id, comment);
     }
 
@@ -75,7 +76,7 @@ const ConfirmModal = () => {
     });
   };
 
-  const closeDeleteConfirmWindow = () => {
+  const closeDeleteConfirmWindow = (): void => {
     setDeletedItem(null);
     setToggleDeleteWindow(false);
   };
@@ -101,7 +102,7 @@ const ConfirmModal = () => {
             <div className='absolute bottom-0 w-full flex items-center justify-between text-[1rem]'>
               <button
                 className={`${submitState.style} py-[0.8rem] w-full text-white opacity-100 hover:opacity-80 transition-all duration-200 ease-linear`}
-                onClick={() => handleDelete(deletedItem)}
+                onClick={handleDelete}
                 disabled={submitState.state === 'handling' ? true : false}
               >
                 {submitState.text}

@@ -15,7 +15,10 @@ const NavBar = () => {
     search: string,
   ): void => {
     e.preventDefault();
-    if (search !== '') router.push(`/search/${search}`);
+    if (search !== '') {
+      router.push(`/search/${search}`);
+      setSearchTerm('');
+    }
   };
 
   return (

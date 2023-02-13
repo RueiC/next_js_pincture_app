@@ -1,4 +1,4 @@
-import { Session } from "next-auth/core/types";
+import { Session } from 'next-auth/core/types';
 
 type Image = {
   asset: {
@@ -18,6 +18,15 @@ export type CommentType = {
   createdAt: string;
   postedBy: PostedBy;
 };
+
+export interface SubmitedComment {
+  comment: string;
+  createdAt: string;
+  postedBy: {
+    _type: string;
+    _ref: string | undefined;
+  };
+}
 
 export type Save = {
   userId: string;
@@ -71,4 +80,10 @@ export interface PinDetail extends PinItem {
   title: string;
   about: string;
   category: string;
+}
+
+export interface DeletedItem {
+  type: string;
+  id: string;
+  comment: CommentType | null;
 }

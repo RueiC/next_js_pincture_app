@@ -1,22 +1,27 @@
-import { useEffect, useState } from 'react';
+import { Dispatch, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
-import { PinItem, SessionUser, PinDetail } from '../types';
+import type {
+  PinItem,
+  SessionUser,
+  CommentType,
+  SubmitState,
+  DeletedItem,
+  SubmitedComment,
+} from '../types';
 import { client } from '../utils/client';
 import { pinComments } from '../utils/queries';
 import { stateMsgTemplate } from '../utils/data';
 
 const usePinsData = () => {
   const [toggleDeleteWindow, setToggleDeleteWindow] = useState<boolean>(false);
-  const [deletedItem, setDeletedItem] = useState(null);
-  const [comments, setComments] = useState([]);
+  const [deletedItem, setDeletedItem] = useState<DeletedItem | null>(null);
+  const [comments, setComments] = useState<CommentType[]>([]);
 
-  //
   const savePin = async (
-    pinItem: PinItem | PinDetail,
+    pinItem: PinItem,
     session: SessionUser,
-    setSubmitState,
-  ): Promise<any | null> => {
+  ): Promise<PinItem | null> => {
     if (pinItem === null || !session) {
       return null;
     }
@@ -45,11 +50,10 @@ const usePinsData = () => {
     };
   };
 
-  //
   const unSavePin = async (
-    pinItem: PinItem | PinDetail,
+    pinItem: PinItem,
     session: SessionUser,
-  ): Promise<any | null> => {
+  ): Promise<PinItem | null> => {
     if (
       pinItem === null ||
       !session ||
@@ -74,14 +78,13 @@ const usePinsData = () => {
     };
   };
 
-  //
-  const toggleSavedBtn = async ({
-    pinItem,
-    isSaved,
-    session,
-    setPinItem,
-    setSubmitState,
-  }): Promise<void> => {
+  const toggleSavedBtn = async (
+    pinItem: PinItem,
+    isSaved: boolean,
+    session: SessionUser,
+    setPinItem: Dispatch<React.SetStateAction<PinItem | null>>,
+    setSubmitState: Dispatch<React.SetStateAction<SubmitState>>,
+  ): Promise<void> => {
     if (!pinItem || !session) return;
     setSubmitState({
       style: stateMsgTemplate.style.gray,
@@ -91,10 +94,10 @@ const usePinsData = () => {
 
     try {
       if (isSaved) {
-        const res = await unSavePin(pinItem, session, setSubmitState);
+        const res = await unSavePin(pinItem, session);
         setPinItem(res);
       } else {
-        const res = await savePin(pinItem, session, setSubmitState);
+        const res = await savePin(pinItem, session);
         setPinItem(res);
       }
     } catch (err) {
@@ -108,7 +111,6 @@ const usePinsData = () => {
     });
   };
 
-  //
   const fetchComments = async (pinId: string): Promise<void> => {
     try {
       const query: string = pinComments(pinId);
@@ -121,8 +123,10 @@ const usePinsData = () => {
     }
   };
 
-  //
-  const addComment = async (pinId, commentData): Promise<void> => {
+  const addComment = async (
+    pinId: string,
+    commentData: SubmitedComment,
+  ): Promise<void> => {
     try {
       await client
         .patch(pinId)
@@ -138,7 +142,6 @@ const usePinsData = () => {
     }
   };
 
-  //
   useEffect(() => {
     if (!deletedItem) {
       setToggleDeleteWindow(false);

@@ -1,22 +1,14 @@
-import { Dispatch, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { useSession } from 'next-auth/react';
 import { ConfirmModal } from './index';
 import Pin from './Pin';
-import { PinItem, SessionUser, SubmitState } from '../types';
-import { toast } from 'react-toastify';
-import { client } from '../utils/client';
+import { PinItem, SessionUser } from '../types';
+
 import { useStateContext } from '../store/stateContext';
 
 interface Props {
   pins: PinItem[];
-}
-
-interface ToggleSaveBtn {
-  pinItem: PinItem;
-  isSaved: boolean;
-  setPinItem: Dispatch<React.SetStateAction<PinItem | null>>;
-  setSubmitState: Dispatch<React.SetStateAction<SubmitState>>;
 }
 
 const breakpointColumnsObj = {
@@ -43,7 +35,7 @@ const MasonryLayout = ({ pins }: Props) => {
     <>
       {toggleDeleteWindow ? <ConfirmModal /> : null}
 
-      <div className='px-[3rem] md:px-[6rem] xl:px-[10rem] pt-[2rem]'>
+      <div className='w-full h-full px-[3rem] md:px-[6rem] xl:px-[10rem] pt-[2rem]'>
         {newPins?.length > 0 && session ? (
           <Masonry
             className='flex gap-[3rem] sm:gap-[1.8rem]'
