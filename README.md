@@ -16,7 +16,7 @@ Website Demo - https://next-js-pincture.vercel.app/login
 在這個專案中收穫最多的是
 1. 學習現有網頁(Pinterest)的功能實作
 2. 學習運用Next.js來完成SSR
-3. 如何利用Sanity API query來達成API的請求。
+3. 如何利用Sanity API query來達成API的請求
 
 【使用技術】
 
